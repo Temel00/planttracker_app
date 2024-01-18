@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "992497773489",
+    "project_id": "planttracker-flutter-app",
+    "storage_bucket": "planttracker-flutter-app.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:992497773489:android:a9dc826191011280a26b90",
+        "android_client_info": {
+          "package_name": "se.caerusInno.planttracker_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAmeY-kgaTOav3I9zla9mZlrUFKkBebCJg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
