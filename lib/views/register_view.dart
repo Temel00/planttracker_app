@@ -1,8 +1,10 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:planttracker_app/constants/routes.dart';
 import 'package:planttracker_app/firebase_options.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:developer' as devtools show log;
 
 class RegisterView extends HookWidget {
   const RegisterView({super.key});
@@ -53,19 +55,28 @@ class RegisterView extends HookWidget {
                           email: email,
                           password: password,
                         );
-                        print(userCredential);
+                        devtools.log(userCredential.toString());
                       } on FirebaseAuthException catch (e) {
                         if (e.code == 'weak-password') {
-                          print('Weak password');
+                          devtools.log('Weak password');
                         } else if (e.code == 'email-already-in-use') {
-                          print('Email is already in use');
+                          devtools.log('Email is already in use');
                         } else if (e.code == 'invalid-email') {
-                          print('Invalid email entered');
+                          devtools.log('Invalid email entered');
                         }
                       }
                     },
                     child: const Text('Register'),
                   ),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pushNamedAndRemoveUntil(
+                        loginRoute,
+                        (route) => false,
+                      );
+                    },
+                    child: const Text('Already registered? Login here'),
+                  )
                 ],
               );
             default:
