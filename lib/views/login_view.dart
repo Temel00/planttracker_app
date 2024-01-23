@@ -4,7 +4,8 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:planttracker_app/constants/routes.dart';
 import 'package:planttracker_app/firebase_options.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'dart:developer' as devtools show log;
+
+import 'package:planttracker_app/utilities/show_error_dialog.dart';
 
 class LoginView extends HookWidget {
   const LoginView({super.key});
@@ -49,21 +50,53 @@ class LoginView extends HookWidget {
                     onPressed: () async {
                       final email = emailController.value.text;
                       final password = passwordController.value.text;
-                      try {
-                        await FirebaseAuth.instance.signInWithEmailAndPassword(
-                            email: email, password: password);
-                        if (!context.mounted) return;
-                        Navigator.of(context).pushNamedAndRemoveUntil(
-                          dashboardRoute,
-                          (route) => false,
-                        );
-                      } on FirebaseAuthException catch (e) {
-                        if (e.code == 'invalid-email') {
-                          devtools.log('Invalid email format');
-                        } else {
-                          devtools.log('Invalid email or password');
-                        }
-                      }
+                      FirebaseAuth.instance
+                          .signInWithEmailAndPassword(
+                              email: email, password: password)
+                          .then(
+                        (value) {
+                          final user = FirebaseAuth.instance.currentUser;
+                          if (user?.emailVerified ?? false) {
+                            // user's email is verified
+                            Navigator.of(context).pushNamedAndRemoveUntil(
+                              dashboardRoute,
+                              (route) => false,
+                            );
+                          } else {
+                            Navigator.of(context).pushNamedAndRemoveUntil(
+                              verifyEmailRoute,
+                              (route) => false,
+                            );
+                          }
+                        },
+                      ).catchError(
+                        (error) async {
+                          final FirebaseAuthException? e = error;
+                          if (e != null) {
+                            if (e.code == 'invalid-email') {
+                              await showErrorDialog(
+                                context,
+                                "User not found",
+                              );
+                            } else if (e.code == 'invalid-credential') {
+                              await showErrorDialog(
+                                context,
+                                "Invalid credentials",
+                              );
+                            } else {
+                              await showErrorDialog(
+                                context,
+                                'Error: ${e.code}',
+                              );
+                            }
+                          } else {
+                            await showErrorDialog(
+                              context,
+                              "Unknown error",
+                            );
+                          }
+                        },
+                      );
                     },
                     child: const Text('Login'),
                   ),

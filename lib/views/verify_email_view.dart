@@ -11,7 +11,10 @@ class VerifyEmailView extends StatelessWidget {
       appBar: AppBar(title: const Text('Verify email')),
       body: Column(
         children: [
-          const Text('Please verify your email address'),
+          const Text(
+              "We've send you an email verification. Please open it to verify your account"),
+          const Text(
+              "If you haven't recieved a verification email yet, press the button below"),
           TextButton(
             onPressed: () async {
               final user = FirebaseAuth.instance.currentUser;

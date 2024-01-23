@@ -6,6 +6,8 @@ import 'package:planttracker_app/firebase_options.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:developer' as devtools show log;
 
+import 'package:planttracker_app/utilities/show_error_dialog.dart';
+
 class RegisterView extends HookWidget {
   const RegisterView({super.key});
 
@@ -49,22 +51,51 @@ class RegisterView extends HookWidget {
                     onPressed: () async {
                       final email = emailController.value.text;
                       final password = passwordController.value.text;
-                      try {
-                        final userCredential = await FirebaseAuth.instance
-                            .createUserWithEmailAndPassword(
-                          email: email,
-                          password: password,
-                        );
-                        devtools.log(userCredential.toString());
-                      } on FirebaseAuthException catch (e) {
-                        if (e.code == 'weak-password') {
-                          devtools.log('Weak password');
-                        } else if (e.code == 'email-already-in-use') {
-                          devtools.log('Email is already in use');
-                        } else if (e.code == 'invalid-email') {
-                          devtools.log('Invalid email entered');
-                        }
-                      }
+
+                      FirebaseAuth.instance
+                          .createUserWithEmailAndPassword(
+                        email: email,
+                        password: password,
+                      )
+                          .then(
+                        (value) {
+                          FirebaseAuth.instance.currentUser
+                              ?.sendEmailVerification();
+                          Navigator.of(context).pushNamed(verifyEmailRoute);
+                        },
+                      ).catchError(
+                        (error) async {
+                          final FirebaseAuthException? e = error;
+                          if (e != null) {
+                            if (e.code == 'weak-password') {
+                              await showErrorDialog(
+                                context,
+                                "Weak password",
+                              );
+                            } else if (e.code == 'email-already-in-use') {
+                              await showErrorDialog(
+                                context,
+                                "Email already in use",
+                              );
+                            } else if (e.code == 'invalid-email') {
+                              await showErrorDialog(
+                                context,
+                                "Invalid email",
+                              );
+                            } else {
+                              await showErrorDialog(
+                                context,
+                                "Firebase Auth Error ${e.code}",
+                              );
+                            }
+                          } else {
+                            await showErrorDialog(
+                              context,
+                              "Unknown error",
+                            );
+                          }
+                        },
+                      );
                     },
                     child: const Text('Register'),
                   ),

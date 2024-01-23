@@ -22,6 +22,7 @@ void main() {
       loginRoute: (context) => const LoginView(),
       registerRoute: (context) => const RegisterView(),
       dashboardRoute: (context) => const DashboardView(),
+      verifyEmailRoute: (context) => const VerifyEmailView(),
     },
   ));
 }
@@ -55,11 +56,13 @@ class HomePage extends StatelessWidget {
                 onPressed: () async {
                   final shouldLogout = await showLogOutDialog(context);
                   if (shouldLogout) {
-                    await FirebaseAuth.instance.signOut();
-                    if (!context.mounted) return;
-                    Navigator.of(context).pushNamedAndRemoveUntil(
-                      loginRoute,
-                      (_) => false,
+                    await FirebaseAuth.instance.signOut().then(
+                      (value) {
+                        Navigator.of(context).pushNamedAndRemoveUntil(
+                          loginRoute,
+                          (_) => false,
+                        );
+                      },
                     );
                   }
                 },
