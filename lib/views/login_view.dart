@@ -1,10 +1,8 @@
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:planttracker_app/constants/routes.dart';
-import 'package:planttracker_app/firebase_options.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-
+import 'package:planttracker_app/services/auth/auth_exceptions.dart';
+import 'package:planttracker_app/services/auth/auth_service.dart';
 import 'package:planttracker_app/utilities/show_error_dialog.dart';
 
 class LoginView extends HookWidget {
@@ -20,9 +18,7 @@ class LoginView extends HookWidget {
         title: const Text('Login'),
       ),
       body: FutureBuilder(
-        future: Firebase.initializeApp(
-          options: DefaultFirebaseOptions.currentPlatform,
-        ),
+        future: AuthService.firebase().initialize(),
         builder: (context, snapshot) {
           switch (snapshot.connectionState) {
             case ConnectionState.done:
@@ -50,14 +46,15 @@ class LoginView extends HookWidget {
                     onPressed: () async {
                       final email = emailController.value.text;
                       final password = passwordController.value.text;
-                      FirebaseAuth.instance
-                          .signInWithEmailAndPassword(
-                              email: email, password: password)
+                      await AuthService.firebase()
+                          .logIn(
+                        email: email,
+                        password: password,
+                      )
                           .then(
                         (value) {
-                          final user = FirebaseAuth.instance.currentUser;
-                          if (user?.emailVerified ?? false) {
-                            // user's email is verified
+                          final user = AuthService.firebase().currentUser;
+                          if (user?.isEmailVerified ?? false) {
                             Navigator.of(context).pushNamedAndRemoveUntil(
                               dashboardRoute,
                               (route) => false,
@@ -70,32 +67,27 @@ class LoginView extends HookWidget {
                           }
                         },
                       ).catchError(
-                        (error) async {
-                          final FirebaseAuthException? e = error;
-                          if (e != null) {
-                            if (e.code == 'invalid-email') {
-                              await showErrorDialog(
-                                context,
-                                "User not found",
-                              );
-                            } else if (e.code == 'invalid-credential') {
-                              await showErrorDialog(
-                                context,
-                                "Invalid credentials",
-                              );
-                            } else {
-                              await showErrorDialog(
-                                context,
-                                'Error: ${e.code}',
-                              );
-                            }
-                          } else {
-                            await showErrorDialog(
-                              context,
-                              "Unknown error",
-                            );
-                          }
+                        (_) async {
+                          await showErrorDialog(
+                            context,
+                            'Invalid Email',
+                          );
                         },
+                        test: (e) => e is InvalidEmailAuthException,
+                      ).catchError(
+                        (_) async {
+                          await showErrorDialog(
+                            context,
+                            'Invalid Credential',
+                          );
+                        },
+                        test: (e) => e is InvalidCredentialAuthException,
+                      ).catchError(
+                        (_) async {
+                          await showErrorDialog(
+                              context, 'Generic Auth Exception');
+                        },
+                        test: (e) => e is GenericAuthException,
                       );
                     },
                     child: const Text('Login'),

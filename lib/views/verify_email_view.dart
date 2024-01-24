@@ -1,6 +1,7 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'dart:developer' as devtools show log;
+import 'package:planttracker_app/constants/routes.dart';
+
+import 'package:planttracker_app/services/auth/auth_service.dart';
 
 class VerifyEmailView extends StatelessWidget {
   const VerifyEmailView({super.key});
@@ -17,12 +18,19 @@ class VerifyEmailView extends StatelessWidget {
               "If you haven't recieved a verification email yet, press the button below"),
           TextButton(
             onPressed: () async {
-              final user = FirebaseAuth.instance.currentUser;
-              devtools.log(user.toString());
-              await user?.sendEmailVerification();
+              await AuthService.firebase().sendEmailVerification();
             },
             child: const Text('Send Email Verification'),
-          )
+          ),
+          TextButton(
+            onPressed: () async {
+              await AuthService.firebase().logOut().then(
+                    (value) => Navigator.of(context).pushNamedAndRemoveUntil(
+                        registerRoute, (route) => false),
+                  );
+            },
+            child: const Text('Restart'),
+          ),
         ],
       ),
     );
