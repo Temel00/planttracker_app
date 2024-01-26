@@ -24,12 +24,6 @@ class _PlantsViewState extends State<PlantsView> {
   }
 
   @override
-  void dispose() {
-    _plantsService.close();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
@@ -80,11 +74,29 @@ class _PlantsViewState extends State<PlantsView> {
             switch (snapshot.connectionState) {
               case ConnectionState.done:
                 return StreamBuilder(
-                  stream: _plantsService.allNotes,
+                  stream: _plantsService.allPlants,
                   builder: (context, snapshot) {
                     switch (snapshot.connectionState) {
                       case ConnectionState.waiting:
-                        return const Text('Waiting for all notes...');
+                      case ConnectionState.active:
+                        if (snapshot.hasData) {
+                          final allPlants =
+                              snapshot.data as List<DatabasePlant>;
+                          return ListView.builder(
+                            itemCount: allPlants.length,
+                            itemBuilder: (context, index) {
+                              final plant = allPlants[index];
+                              return ListTile(
+                                  title: Text(
+                                plant.text,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ));
+                            },
+                          );
+                        } else {
+                          return const CircularProgressIndicator();
+                        }
                       default:
                         return const CircularProgressIndicator();
                     }

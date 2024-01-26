@@ -12,13 +12,18 @@ class PlantsService {
   List<DatabasePlant> _plants = [];
 
   static final PlantsService _shared = PlantsService._sharedInstance();
-  PlantsService._sharedInstance();
+  PlantsService._sharedInstance() {
+    _plantsStreamController = StreamController<List<DatabasePlant>>.broadcast(
+      onListen: () {
+        _plantsStreamController.sink.add(_plants);
+      },
+    );
+  }
   factory PlantsService() => _shared;
 
-  final _plantsStreamController =
-      StreamController<List<DatabasePlant>>.broadcast();
+  late final StreamController<List<DatabasePlant>> _plantsStreamController;
 
-  Stream<List<DatabasePlant>> get allNotes => _plantsStreamController.stream;
+  Stream<List<DatabasePlant>> get allPlants => _plantsStreamController.stream;
 
   Future<DatabaseUser> getOrCreateUser({required String email}) async {
     try {
