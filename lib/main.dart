@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:planttracker_app/constants/routes.dart';
 import 'package:planttracker_app/services/auth/auth_service.dart';
-import 'package:planttracker_app/views/dashboard_view.dart';
+import 'package:planttracker_app/views/plants/new_plant_view.dart';
+import 'package:planttracker_app/views/plants/plants_view.dart';
 import 'package:planttracker_app/views/login_view.dart';
 import 'package:planttracker_app/views/register_view.dart';
 import 'package:planttracker_app/views/verify_email_view.dart';
@@ -18,8 +19,9 @@ void main() {
     routes: {
       loginRoute: (context) => const LoginView(),
       registerRoute: (context) => const RegisterView(),
-      dashboardRoute: (context) => const DashboardView(),
+      plantsRoute: (context) => const PlantsView(),
       verifyEmailRoute: (context) => const VerifyEmailView(),
+      newPlantRoute: (context) => const NewPlantView(),
     },
   ));
 }
@@ -39,7 +41,7 @@ class HomePage extends StatelessWidget {
               final user = AuthService.firebase().currentUser;
               if (user != null) {
                 if (user.isEmailVerified) {
-                  return const DashboardView();
+                  return const PlantsView();
                 } else {
                   return const VerifyEmailView();
                 }

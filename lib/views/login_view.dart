@@ -56,7 +56,7 @@ class LoginView extends HookWidget {
                           final user = AuthService.firebase().currentUser;
                           if (user?.isEmailVerified ?? false) {
                             Navigator.of(context).pushNamedAndRemoveUntil(
-                              dashboardRoute,
+                              plantsRoute,
                               (route) => false,
                             );
                           } else {

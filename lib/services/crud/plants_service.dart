@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path_provider/path_provider.dart';
@@ -7,14 +9,45 @@ import 'package:planttracker_app/services/crud/crud_exceptions.dart';
 class PlantsService {
   Database? _db;
 
+  List<DatabasePlant> _plants = [];
+
+  static final PlantsService _shared = PlantsService._sharedInstance();
+  PlantsService._sharedInstance();
+  factory PlantsService() => _shared;
+
+  final _plantsStreamController =
+      StreamController<List<DatabasePlant>>.broadcast();
+
+  Stream<List<DatabasePlant>> get allNotes => _plantsStreamController.stream;
+
+  Future<DatabaseUser> getOrCreateUser({required String email}) async {
+    try {
+      final user = await getUser(email: email);
+      return user;
+    } on UserNotFoundException {
+      final createdUser = await createUser(email: email);
+      return createdUser;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> _cacheNotes() async {
+    final allPlants = await getAllPlants();
+    _plants = allPlants.toList();
+    _plantsStreamController.add(_plants);
+  }
+
   Future<DatabasePlant> updatePlant({
     required DatabasePlant plant,
     required String text,
   }) async {
     final db = _getDatabaseOrThrow();
 
+    // make sure plant exists
     await getPlant(id: plant.id);
 
+    // update db
     final updatesCount = await db.update(
       plantTable,
       {
@@ -28,11 +61,16 @@ class PlantsService {
     if (updatesCount == 0) {
       throw CouldNotUpdatePlantException();
     } else {
-      return await getPlant(id: plant.id);
+      final updatedPlant = await getPlant(id: plant.id);
+      _plants.removeWhere((plant) => plant.id == updatedPlant.id);
+      _plants.add(updatedPlant);
+      _plantsStreamController.add(_plants);
+      return updatedPlant;
     }
   }
 
   Future<Iterable<DatabasePlant>> getAllPlants() async {
+    await _ensureDbIsOpen();
     final db = _getDatabaseOrThrow();
     final plants = await db.query(plantTable);
 
@@ -40,6 +78,7 @@ class PlantsService {
   }
 
   Future<DatabasePlant> getPlant({required int id}) async {
+    await _ensureDbIsOpen();
     final db = _getDatabaseOrThrow();
     final plants = await db.query(
       plantTable,
@@ -50,16 +89,25 @@ class PlantsService {
     if (plants.isEmpty) {
       throw PlantNotFoundException();
     } else {
-      return DatabasePlant.fromRow(plants.first);
+      final plant = DatabasePlant.fromRow(plants.first);
+      _plants.removeWhere((plant) => plant.id == id);
+      _plants.add(plant);
+      _plantsStreamController.add(_plants);
+      return plant;
     }
   }
 
   Future<int> deleteAllPlants() async {
+    await _ensureDbIsOpen();
     final db = _getDatabaseOrThrow();
-    return await db.delete(plantTable);
+    final numberOfDeletions = await db.delete(plantTable);
+    _plants = [];
+    _plantsStreamController.add(_plants);
+    return numberOfDeletions;
   }
 
   Future<void> deletePlant({required int id}) async {
+    await _ensureDbIsOpen();
     final db = _getDatabaseOrThrow();
     final deletedCount = await db.delete(
       plantTable,
@@ -68,10 +116,14 @@ class PlantsService {
     );
     if (deletedCount != 1) {
       throw CouldNotDeletePlantException();
+    } else {
+      _plants.removeWhere((plant) => plant.id == id);
+      _plantsStreamController.add(_plants);
     }
   }
 
   Future<DatabasePlant> createPlant({required DatabaseUser owner}) async {
+    await _ensureDbIsOpen();
     final db = _getDatabaseOrThrow();
 
     // make suer owner exists in database with correct id
@@ -95,10 +147,14 @@ class PlantsService {
       isSyncedWithCloud: true,
     );
 
+    _plants.add(plant);
+    _plantsStreamController.add(_plants);
+
     return plant;
   }
 
   Future<DatabaseUser> getUser({required String email}) async {
+    await _ensureDbIsOpen();
     final db = _getDatabaseOrThrow();
     final results = await db.query(
       userTable,
@@ -115,6 +171,7 @@ class PlantsService {
   }
 
   Future<DatabaseUser> createUser({required String email}) async {
+    await _ensureDbIsOpen();
     final db = _getDatabaseOrThrow();
     final results = await db.query(
       userTable,
@@ -137,6 +194,7 @@ class PlantsService {
   }
 
   Future<void> deleteUser({required String email}) async {
+    await _ensureDbIsOpen();
     final db = _getDatabaseOrThrow();
     final deletedCount = await db.delete(
       userTable,
@@ -167,6 +225,14 @@ class PlantsService {
     }
   }
 
+  Future<void> _ensureDbIsOpen() async {
+    try {
+      await open();
+    } on DatabaseAlreadyOpenException {
+      // empty
+    }
+  }
+
   Future<void> open() async {
     if (_db != null) {
       throw DatabaseAlreadyOpenException();
@@ -181,6 +247,7 @@ class PlantsService {
       await db.execute(createUserTable);
       // create plant table
       await db.execute(createPlantTable);
+      await _cacheNotes();
     } on MissingPlatformDirectoryException {
       throw UnableToGetDocumentsDirectoryException();
     }

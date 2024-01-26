@@ -18,8 +18,8 @@ class PlantItem {
   });
 }
 
-class PlantsView extends HookWidget {
-  const PlantsView({Key? key}) : super(key: key);
+class PlantSearchView extends HookWidget {
+  const PlantSearchView({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
