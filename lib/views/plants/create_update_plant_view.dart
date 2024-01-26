@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:planttracker_app/services/auth/auth_service.dart';
 import 'package:planttracker_app/services/crud/plants_service.dart';
+import 'package:planttracker_app/utilities/generics/get_arguments.dart';
 
-class NewPlantView extends StatefulWidget {
-  const NewPlantView({super.key});
+class CreateUpdatePlantView extends StatefulWidget {
+  const CreateUpdatePlantView({super.key});
 
   @override
-  State<NewPlantView> createState() => _NewPlantViewState();
+  State<CreateUpdatePlantView> createState() => _CreateUpdatePlantViewState();
 }
 
-class _NewPlantViewState extends State<NewPlantView> {
+class _CreateUpdatePlantViewState extends State<CreateUpdatePlantView> {
   DatabasePlant? _plant;
   late final PlantsService _plantsService;
   late final TextEditingController _textController;
@@ -38,7 +39,15 @@ class _NewPlantViewState extends State<NewPlantView> {
     _textController.addListener(_textControllerListener);
   }
 
-  Future<DatabasePlant> createNewPlant() async {
+  Future<DatabasePlant> createOrGetExistingPlant(BuildContext context) async {
+    final widgetPlant = context.getArgument<DatabasePlant>();
+
+    if (widgetPlant != null) {
+      _plant = widgetPlant;
+      _textController.text = widgetPlant.text;
+      return widgetPlant;
+    }
+
     final existingPlant = _plant;
     if (existingPlant != null) {
       return existingPlant;
@@ -46,7 +55,9 @@ class _NewPlantViewState extends State<NewPlantView> {
     final currentUser = AuthService.firebase().currentUser!;
     final email = currentUser.email!;
     final owner = await _plantsService.getUser(email: email);
-    return await _plantsService.createPlant(owner: owner);
+    final newPlant = await _plantsService.createPlant(owner: owner);
+    _plant = newPlant;
+    return newPlant;
   }
 
   void _deletePlantIfTextIsEmpty() {
@@ -82,11 +93,10 @@ class _NewPlantViewState extends State<NewPlantView> {
           title: const Text('New Plant'),
         ),
         body: FutureBuilder(
-          future: createNewPlant(),
+          future: createOrGetExistingPlant(context),
           builder: (context, snapshot) {
             switch (snapshot.connectionState) {
               case ConnectionState.done:
-                _plant = snapshot.data as DatabasePlant;
                 _setupTextControllerListener();
                 return TextField(
                   controller: _textController,

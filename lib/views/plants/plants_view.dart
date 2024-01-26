@@ -4,6 +4,8 @@ import 'package:planttracker_app/enums/menu_action.dart';
 
 import 'package:planttracker_app/services/auth/auth_service.dart';
 import 'package:planttracker_app/services/crud/plants_service.dart';
+import 'package:planttracker_app/utilities/dialogs/logout_dialog.dart';
+import 'package:planttracker_app/views/plants/plants_list_view.dart';
 
 class PlantsView extends StatefulWidget {
   const PlantsView({super.key});
@@ -31,7 +33,7 @@ class _PlantsViewState extends State<PlantsView> {
           actions: [
             IconButton(
                 onPressed: () {
-                  Navigator.of(context).pushNamed(newPlantRoute);
+                  Navigator.of(context).pushNamed(createUpdatePlantRoute);
                 },
                 icon: const Icon(Icons.add)),
             MenuAnchor(
@@ -82,16 +84,16 @@ class _PlantsViewState extends State<PlantsView> {
                         if (snapshot.hasData) {
                           final allPlants =
                               snapshot.data as List<DatabasePlant>;
-                          return ListView.builder(
-                            itemCount: allPlants.length,
-                            itemBuilder: (context, index) {
-                              final plant = allPlants[index];
-                              return ListTile(
-                                  title: Text(
-                                plant.text,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ));
+                          return PlantsListView(
+                            plants: allPlants,
+                            onDeletePlant: (plant) async {
+                              await _plantsService.deletePlant(id: plant.id);
+                            },
+                            onTapped: (plant) {
+                              Navigator.of(context).pushNamed(
+                                createUpdatePlantRoute,
+                                arguments: plant,
+                              );
                             },
                           );
                         } else {
@@ -108,30 +110,4 @@ class _PlantsViewState extends State<PlantsView> {
           },
         ));
   }
-}
-
-Future<bool> showLogOutDialog(BuildContext context) {
-  return showDialog<bool>(
-    context: context,
-    builder: (context) {
-      return AlertDialog(
-        title: const Text('Sign out'),
-        content: const Text('Are you sure you want to sign out?'),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop(false);
-            },
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop(true);
-            },
-            child: const Text('Log out'),
-          ),
-        ],
-      );
-    },
-  ).then((value) => value ?? false);
 }
