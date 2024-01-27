@@ -1,4 +1,5 @@
 const loginRoute = '/login/';
 const registerRoute = '/register/';
-const dashboardRoute = '/dashboard/';
+const plantsRoute = '/plants/';
 const verifyEmailRoute = '/verify-email/';
+const createUpdatePlantRoute = '/plants/new-plant/';
