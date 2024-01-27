@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:planttracker_app/extensions/list/filter.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' show join;
@@ -10,6 +11,8 @@ class PlantsService {
   Database? _db;
 
   List<DatabasePlant> _plants = [];
+
+  DatabaseUser? _user;
 
   static final PlantsService _shared = PlantsService._sharedInstance();
   PlantsService._sharedInstance() {
@@ -23,14 +26,31 @@ class PlantsService {
 
   late final StreamController<List<DatabasePlant>> _plantsStreamController;
 
-  Stream<List<DatabasePlant>> get allPlants => _plantsStreamController.stream;
+  Stream<List<DatabasePlant>> get allPlants =>
+      _plantsStreamController.stream.filter((plant) {
+        final currentUser = _user;
+        if (currentUser != null) {
+          return plant.userId == currentUser.id;
+        } else {
+          throw UserNotSetBeforeReadingAllPlantsException();
+        }
+      });
 
-  Future<DatabaseUser> getOrCreateUser({required String email}) async {
+  Future<DatabaseUser> getOrCreateUser({
+    required String email,
+    bool setAsCurrentUser = true,
+  }) async {
     try {
       final user = await getUser(email: email);
+      if (setAsCurrentUser) {
+        _user = user;
+      }
       return user;
     } on UserNotFoundException {
       final createdUser = await createUser(email: email);
+      if (setAsCurrentUser) {
+        _user = createdUser;
+      }
       return createdUser;
     } catch (e) {
       rethrow;

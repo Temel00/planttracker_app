@@ -15,3 +15,5 @@ class CouldNotDeletePlantException implements Exception {}
 class PlantNotFoundException implements Exception {}
 
 class CouldNotUpdatePlantException implements Exception {}
+
+class UserNotSetBeforeReadingAllPlantsException implements Exception {}
