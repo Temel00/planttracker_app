@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:planttracker_app/services/auth/auth_service.dart';
-import 'package:planttracker_app/services/crud/plants_service.dart';
 import 'package:planttracker_app/utilities/generics/get_arguments.dart';
+import 'package:planttracker_app/services/cloud/cloud_plant.dart';
+import 'package:planttracker_app/services/cloud/cloud_storage_exceptions.dart';
+import 'package:planttracker_app/services/cloud/firebase_cloud_storage.dart';
 
 class CreateUpdatePlantView extends StatefulWidget {
   const CreateUpdatePlantView({super.key});
@@ -11,13 +13,13 @@ class CreateUpdatePlantView extends StatefulWidget {
 }
 
 class _CreateUpdatePlantViewState extends State<CreateUpdatePlantView> {
-  DatabasePlant? _plant;
-  late final PlantsService _plantsService;
+  CloudPlant? _plant;
+  late final FirebaseCloudStorage _plantsService;
   late final TextEditingController _textController;
 
   @override
   void initState() {
-    _plantsService = PlantsService();
+    _plantsService = FirebaseCloudStorage();
     _textController = TextEditingController();
     super.initState();
   }
@@ -29,7 +31,7 @@ class _CreateUpdatePlantViewState extends State<CreateUpdatePlantView> {
     }
     final text = _textController.text;
     await _plantsService.updatePlant(
-      plant: plant,
+      documentId: plant.documentId,
       text: text,
     );
   }
@@ -39,8 +41,8 @@ class _CreateUpdatePlantViewState extends State<CreateUpdatePlantView> {
     _textController.addListener(_textControllerListener);
   }
 
-  Future<DatabasePlant> createOrGetExistingPlant(BuildContext context) async {
-    final widgetPlant = context.getArgument<DatabasePlant>();
+  Future<CloudPlant> createOrGetExistingPlant(BuildContext context) async {
+    final widgetPlant = context.getArgument<CloudPlant>();
 
     if (widgetPlant != null) {
       _plant = widgetPlant;
@@ -53,9 +55,8 @@ class _CreateUpdatePlantViewState extends State<CreateUpdatePlantView> {
       return existingPlant;
     }
     final currentUser = AuthService.firebase().currentUser!;
-    final email = currentUser.email!;
-    final owner = await _plantsService.getUser(email: email);
-    final newPlant = await _plantsService.createPlant(owner: owner);
+    final userId = currentUser.id;
+    final newPlant = await _plantsService.createNewPlant(ownerUserId: userId);
     _plant = newPlant;
     return newPlant;
   }
@@ -63,7 +64,7 @@ class _CreateUpdatePlantViewState extends State<CreateUpdatePlantView> {
   void _deletePlantIfTextIsEmpty() {
     final plant = _plant;
     if (_textController.text.isEmpty && plant != null) {
-      _plantsService.deletePlant(id: plant.id);
+      _plantsService.deletePlant(documentId: plant.documentId);
     }
   }
 
@@ -72,7 +73,7 @@ class _CreateUpdatePlantViewState extends State<CreateUpdatePlantView> {
     final text = _textController.text;
     if (text.isNotEmpty && plant != null) {
       await _plantsService.updatePlant(
-        plant: plant,
+        documentId: plant.documentId,
         text: text,
       );
     }

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:planttracker_app/services/crud/plants_service.dart';
+import 'package:planttracker_app/services/cloud/cloud_plant.dart';
 import 'package:planttracker_app/utilities/dialogs/delete_dialog.dart';
 
-typedef PlantCallback = void Function(DatabasePlant plant);
+typedef PlantCallback = void Function(CloudPlant plant);
 
 class PlantsListView extends StatelessWidget {
-  final List<DatabasePlant> plants;
+  final Iterable<CloudPlant> plants;
   final PlantCallback onDeletePlant;
   final PlantCallback onTapped;
   const PlantsListView({
@@ -20,7 +20,7 @@ class PlantsListView extends StatelessWidget {
     return ListView.builder(
       itemCount: plants.length,
       itemBuilder: (context, index) {
-        final plant = plants[index];
+        final plant = plants.elementAt(index);
         return ListTile(
           onTap: () => onTapped(plant),
           title: Text(
