@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:planttracker_app/services/auth/auth_service.dart';
+import 'package:planttracker_app/utilities/dialogs/cannot_share_empty_plant_dialog.dart';
 import 'package:planttracker_app/utilities/generics/get_arguments.dart';
 import 'package:planttracker_app/services/cloud/cloud_plant.dart';
-import 'package:planttracker_app/services/cloud/cloud_storage_exceptions.dart';
 import 'package:planttracker_app/services/cloud/firebase_cloud_storage.dart';
+import 'package:share_plus/share_plus.dart';
 
 class CreateUpdatePlantView extends StatefulWidget {
   const CreateUpdatePlantView({super.key});
@@ -92,6 +93,19 @@ class _CreateUpdatePlantViewState extends State<CreateUpdatePlantView> {
     return Scaffold(
         appBar: AppBar(
           title: const Text('New Plant'),
+          actions: [
+            IconButton(
+              onPressed: () async {
+                final text = _textController.text;
+                if (_plant != null || text.isEmpty) {
+                  await showCannotShareEmptyPlantDialog(context);
+                } else {
+                  Share.share(text);
+                }
+              },
+              icon: const Icon(Icons.share),
+            )
+          ],
         ),
         body: FutureBuilder(
           future: createOrGetExistingPlant(context),
