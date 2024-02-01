@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:planttracker_app/constants/routes.dart';
-import 'package:planttracker_app/services/auth/auth_service.dart';
+import 'package:planttracker_app/services/auth/bloc/auth_bloc.dart';
+import 'package:planttracker_app/services/auth/bloc/auth_event.dart';
+import 'package:planttracker_app/services/auth/bloc/auth_state.dart';
+import 'package:planttracker_app/services/auth/firebase_auth_provider.dart';
 import 'package:planttracker_app/views/plants/create_update_plant_view.dart';
 import 'package:planttracker_app/views/plants/plants_view.dart';
 import 'package:planttracker_app/views/login_view.dart';
@@ -9,21 +13,26 @@ import 'package:planttracker_app/views/verify_email_view.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(MaterialApp(
-    title: 'Flutter Demo',
-    theme: ThemeData(
-      colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-      useMaterial3: true,
+  runApp(
+    MaterialApp(
+      title: 'Flutter Demo',
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        useMaterial3: true,
+      ),
+      home: BlocProvider<AuthBloc>(
+        create: (context) => AuthBloc(FirebaseAuthProvider()),
+        child: const HomePage(),
+      ),
+      routes: {
+        loginRoute: (context) => const LoginView(),
+        registerRoute: (context) => const RegisterView(),
+        plantsRoute: (context) => const PlantsView(),
+        verifyEmailRoute: (context) => const VerifyEmailView(),
+        createUpdatePlantRoute: (context) => const CreateUpdatePlantView(),
+      },
     ),
-    home: const HomePage(),
-    routes: {
-      loginRoute: (context) => const LoginView(),
-      registerRoute: (context) => const RegisterView(),
-      plantsRoute: (context) => const PlantsView(),
-      verifyEmailRoute: (context) => const VerifyEmailView(),
-      createUpdatePlantRoute: (context) => const CreateUpdatePlantView(),
-    },
-  ));
+  );
 }
 
 class HomePage extends StatelessWidget {
@@ -31,28 +40,22 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Login')),
-      body: FutureBuilder(
-        future: AuthService.firebase().initialize(),
-        builder: (context, snapshot) {
-          switch (snapshot.connectionState) {
-            case ConnectionState.done:
-              final user = AuthService.firebase().currentUser;
-              if (user != null) {
-                if (user.isEmailVerified) {
-                  return const PlantsView();
-                } else {
-                  return const VerifyEmailView();
-                }
-              } else {
-                return const LoginView();
-              }
-            default:
-              return const CircularProgressIndicator();
-          }
-        },
-      ),
+    context.read<AuthBloc>().add(const AuthEventInitialize());
+
+    return BlocBuilder<AuthBloc, AuthState>(
+      builder: (context, state) {
+        if (state is AuthStateLoggedIn) {
+          return const PlantsView();
+        } else if (state is AuthStateNeedsVerification) {
+          return const VerifyEmailView();
+        } else if (state is AuthStateLoggedOut) {
+          return const LoginView();
+        } else {
+          return const Scaffold(
+            body: CircularProgressIndicator(),
+          );
+        }
+      },
     );
   }
 }

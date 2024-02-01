@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:planttracker_app/constants/routes.dart';
 import 'package:planttracker_app/enums/menu_action.dart';
 
 import 'package:planttracker_app/services/auth/auth_service.dart';
+import 'package:planttracker_app/services/auth/bloc/auth_bloc.dart';
+import 'package:planttracker_app/services/auth/bloc/auth_event.dart';
 import 'package:planttracker_app/services/cloud/cloud_plant.dart';
 import 'package:planttracker_app/services/cloud/firebase_cloud_storage.dart';
 import 'package:planttracker_app/utilities/dialogs/logout_dialog.dart';
@@ -10,7 +13,6 @@ import 'package:planttracker_app/views/plants/plants_list_view.dart';
 
 class PlantsView extends StatefulWidget {
   const PlantsView({super.key});
-
   @override
   State<PlantsView> createState() => _PlantsViewState();
 }
@@ -41,15 +43,11 @@ class _PlantsViewState extends State<PlantsView> {
               MenuItemButton(
                 child: Text(MenuEntry.show.label),
                 onPressed: () async {
-                  final shouldLogout = await showLogOutDialog(context);
-                  if (shouldLogout) {
-                    AuthService.firebase().logOut().then(
-                          (_) => Navigator.of(context).pushNamedAndRemoveUntil(
-                            loginRoute,
-                            (_) => false,
-                          ),
-                        );
-                  }
+                  await showLogOutDialog(context).then((value) {
+                    if (value) {
+                      context.read<AuthBloc>().add(const AuthEventLogOut());
+                    }
+                  });
                 },
               ),
             ],
