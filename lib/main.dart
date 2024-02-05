@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:planttracker_app/constants/routes.dart';
+import 'package:planttracker_app/helpers/loading/loading_screen.dart';
 import 'package:planttracker_app/services/auth/bloc/auth_bloc.dart';
 import 'package:planttracker_app/services/auth/bloc/auth_event.dart';
 import 'package:planttracker_app/services/auth/bloc/auth_state.dart';
@@ -38,7 +39,7 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     context.read<AuthBloc>().add(const AuthEventInitialize());
 
-    return BlocBuilder<AuthBloc, AuthState>(
+    return BlocConsumer<AuthBloc, AuthState>(
       builder: (context, state) {
         if (state is AuthStateLoggedIn) {
           return const PlantsView();
@@ -52,6 +53,16 @@ class HomePage extends StatelessWidget {
           return const Scaffold(
             body: CircularProgressIndicator(),
           );
+        }
+      },
+      listener: (context, state) {
+        if (state.isLoading) {
+          LoadingScreen().show(
+            context: context,
+            text: state.loadingText ?? 'Please wait a moment',
+          );
+        } else {
+          LoadingScreen().hide();
         }
       },
     );
