@@ -5,6 +5,7 @@ import 'package:planttracker_app/utilities/generics/get_arguments.dart';
 import 'package:planttracker_app/services/cloud/cloud_plant.dart';
 import 'package:planttracker_app/services/cloud/firebase_cloud_storage.dart';
 import 'package:share_plus/share_plus.dart';
+import 'dart:developer' as devtools show log;
 
 class CreateUpdatePlantView extends StatefulWidget {
   const CreateUpdatePlantView({super.key});
@@ -17,6 +18,7 @@ class _CreateUpdatePlantViewState extends State<CreateUpdatePlantView> {
   CloudPlant? _plant;
   late final FirebaseCloudStorage _plantsService;
   late final TextEditingController _textController;
+  late int _waterCount;
 
   @override
   void initState() {
@@ -31,7 +33,7 @@ class _CreateUpdatePlantViewState extends State<CreateUpdatePlantView> {
       return;
     }
     final text = _textController.text;
-    await _plantsService.updatePlant(
+    await _plantsService.updatePlantText(
       documentId: plant.documentId,
       text: text,
     );
@@ -48,6 +50,7 @@ class _CreateUpdatePlantViewState extends State<CreateUpdatePlantView> {
     if (widgetPlant != null) {
       _plant = widgetPlant;
       _textController.text = widgetPlant.text;
+      _waterCount = widgetPlant.timesWatered;
       return widgetPlant;
     }
 
@@ -73,10 +76,24 @@ class _CreateUpdatePlantViewState extends State<CreateUpdatePlantView> {
     final plant = _plant;
     final text = _textController.text;
     if (text.isNotEmpty && plant != null) {
-      await _plantsService.updatePlant(
+      await _plantsService.updatePlantText(
         documentId: plant.documentId,
         text: text,
       );
+    }
+  }
+
+  void _updateWaterOnClick() async {
+    final plant = _plant;
+    if (plant != null) {
+      await _plantsService
+          .updateWaterCount(
+        documentId: plant.documentId,
+        timesWatered: _waterCount,
+      )
+          .then((value) {
+        _waterCount++;
+      });
     }
   }
 
@@ -113,12 +130,20 @@ class _CreateUpdatePlantViewState extends State<CreateUpdatePlantView> {
             switch (snapshot.connectionState) {
               case ConnectionState.done:
                 _setupTextControllerListener();
-                return TextField(
-                  controller: _textController,
-                  keyboardType: TextInputType.multiline,
-                  maxLines: null,
-                  decoration: const InputDecoration(
-                      hintText: 'Start typing your plant details'),
+                return Column(
+                  children: [
+                    TextField(
+                      controller: _textController,
+                      keyboardType: TextInputType.multiline,
+                      maxLines: null,
+                      decoration: const InputDecoration(
+                          hintText: 'Start typing your plant details'),
+                    ),
+                    TextButton(
+                      onPressed: _updateWaterOnClick,
+                      child: const Text('Click to Water Plant'),
+                    ),
+                  ],
                 );
               default:
                 return const CircularProgressIndicator();

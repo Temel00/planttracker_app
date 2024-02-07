@@ -14,12 +14,25 @@ class FirebaseCloudStorage {
     }
   }
 
-  Future<void> updatePlant({
+  Future<void> updatePlantText({
     required String documentId,
     required String text,
   }) async {
     try {
       await plants.doc(documentId).update({textFieldName: text});
+    } catch (e) {
+      throw CouldNotUpdatePlantException();
+    }
+  }
+
+  Future<void> updateWaterCount({
+    required String documentId,
+    required int timesWatered,
+  }) async {
+    try {
+      await plants
+          .doc(documentId)
+          .update({timesWateredFieldName: (timesWatered + 1)});
     } catch (e) {
       throw CouldNotUpdatePlantException();
     }
@@ -37,6 +50,7 @@ class FirebaseCloudStorage {
     final document = await plants.add({
       ownerUserIdFieldName: ownerUserId,
       textFieldName: '',
+      timesWateredFieldName: 0,
     });
 
     final fetchedPlant = await document.get();
@@ -44,6 +58,7 @@ class FirebaseCloudStorage {
       documentId: fetchedPlant.id,
       ownerUserId: ownerUserId,
       text: '',
+      timesWatered: 0,
     );
   }
 

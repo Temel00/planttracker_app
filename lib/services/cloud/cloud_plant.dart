@@ -7,15 +7,18 @@ class CloudPlant {
   final String documentId;
   final String ownerUserId;
   final String text;
+  final int timesWatered;
 
   const CloudPlant({
     required this.documentId,
     required this.ownerUserId,
     required this.text,
+    required this.timesWatered,
   });
 
   CloudPlant.fromSnapshot(QueryDocumentSnapshot<Map<String, dynamic>> snapshot)
       : documentId = snapshot.id,
         ownerUserId = snapshot.data()[ownerUserIdFieldName],
-        text = snapshot.data()[textFieldName] as String;
+        text = snapshot.data()[textFieldName] as String,
+        timesWatered = snapshot.data()[timesWateredFieldName] as int;
 }
