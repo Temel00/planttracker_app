@@ -25,26 +25,13 @@ class FirebaseCloudStorage {
     }
   }
 
-  Stream<Iterable<CloudPlant>> allPlants({required String ownerUserId}) =>
-      plants.snapshots().map((event) => event.docs
-          .map((doc) => CloudPlant.fromSnapshot(doc))
-          .where((plant) => plant.ownerUserId == ownerUserId));
-
-  Future<Iterable<CloudPlant>> getPlants({required String ownerUserId}) async {
-    try {
-      return await plants
-          .where(
-            ownerUserIdFieldName,
-            isEqualTo: ownerUserId,
-          )
-          .get()
-          .then(
-            (value) => value.docs.map((doc) => CloudPlant.fromSnapshot(doc)),
-          );
-    } catch (e) {
-      throw CouldNotGetAllPlantsException();
-    }
-  }
+  Stream<Iterable<CloudPlant>> allPlants(
+          {required String ownerUserId}) =>
+      plants
+          .where(ownerUserIdFieldName, isEqualTo: ownerUserId)
+          .snapshots()
+          .map(
+              (event) => event.docs.map((doc) => CloudPlant.fromSnapshot(doc)));
 
   Future<CloudPlant> createNewPlant({required String ownerUserId}) async {
     final document = await plants.add({

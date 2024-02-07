@@ -8,10 +8,11 @@ class CloudPlant {
   final String ownerUserId;
   final String text;
 
-  const CloudPlant(
-      {required this.documentId,
-      required this.ownerUserId,
-      required this.text});
+  const CloudPlant({
+    required this.documentId,
+    required this.ownerUserId,
+    required this.text,
+  });
 
   CloudPlant.fromSnapshot(QueryDocumentSnapshot<Map<String, dynamic>> snapshot)
       : documentId = snapshot.id,

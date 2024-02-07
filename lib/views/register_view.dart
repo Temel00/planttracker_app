@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:planttracker_app/services/auth/auth_exceptions.dart';
-import 'package:planttracker_app/services/auth/auth_service.dart';
 import 'package:planttracker_app/services/auth/bloc/auth_bloc.dart';
 import 'package:planttracker_app/services/auth/bloc/auth_event.dart';
 import 'package:planttracker_app/services/auth/bloc/auth_state.dart';
@@ -34,56 +33,50 @@ class RegisterView extends HookWidget {
         appBar: AppBar(
           title: const Text('Register'),
         ),
-        body: FutureBuilder(
-          future: AuthService.firebase().initialize(),
-          builder: (context, snapshot) {
-            switch (snapshot.connectionState) {
-              case ConnectionState.done:
-                return Column(
-                  children: [
-                    TextField(
-                      controller: emailController,
-                      enableSuggestions: false,
-                      autocorrect: false,
-                      keyboardType: TextInputType.emailAddress,
-                      decoration: const InputDecoration(
-                        hintText: 'Enter your email here',
-                      ),
-                    ),
-                    TextField(
-                      controller: passwordController,
-                      obscureText: true,
-                      enableSuggestions: false,
-                      autocorrect: false,
-                      decoration: const InputDecoration(
-                        hintText: 'Enter your password here',
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: () async {
-                        final email = emailController.value.text;
-                        final password = passwordController.value.text;
-                        context.read<AuthBloc>().add(AuthEventRegister(
-                              email,
-                              password,
-                            ));
-                      },
-                      child: const Text('Register'),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        context.read<AuthBloc>().add(
-                              const AuthEventLogOut(),
-                            );
-                      },
-                      child: const Text('Already registered? Login here'),
-                    )
-                  ],
-                );
-              default:
-                return const CircularProgressIndicator();
-            }
-          },
+        body: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            children: [
+              TextField(
+                controller: emailController,
+                enableSuggestions: false,
+                autocorrect: false,
+                autofocus: true,
+                keyboardType: TextInputType.emailAddress,
+                decoration: const InputDecoration(
+                  hintText: 'Enter your email here',
+                ),
+              ),
+              TextField(
+                controller: passwordController,
+                obscureText: true,
+                enableSuggestions: false,
+                autocorrect: false,
+                decoration: const InputDecoration(
+                  hintText: 'Enter your password here',
+                ),
+              ),
+              TextButton(
+                onPressed: () async {
+                  final email = emailController.value.text;
+                  final password = passwordController.value.text;
+                  context.read<AuthBloc>().add(AuthEventRegister(
+                        email,
+                        password,
+                      ));
+                },
+                child: const Text('Register'),
+              ),
+              TextButton(
+                onPressed: () {
+                  context.read<AuthBloc>().add(
+                        const AuthEventLogOut(),
+                      );
+                },
+                child: const Text('Already registered? Login here'),
+              )
+            ],
+          ),
         ),
       ),
     );
